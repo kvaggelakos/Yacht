@@ -1,38 +1,26 @@
+import asyncio
+import io
+import json
+import subprocess
+import time
+import zipfile
 from os import stat
+
+import aiodocker
+import aiostream
+import docker
+import yaml
+from api.db.schemas.apps import AppLogs, DeployForm, DeployLogs, Processes
+from api.utils.apps import (_check_updates, calculate_cpu_percent,
+                            calculate_cpu_percent2, conv_caps2data,
+                            conv_cpus2data, conv_devices2data, conv_env2data,
+                            conv_image2data, conv_labels2data,
+                            conv_portlabels2data, conv_ports2data,
+                            conv_restart2data, conv_sysctls2data,
+                            conv_volumes2data, format_bytes)
+from api.utils.templates import conv2dict
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
-
-from api.db.schemas.apps import DeployLogs, DeployForm, AppLogs, Processes
-from api.utils.apps import (
-    conv_caps2data,
-    conv_devices2data,
-    conv_env2data,
-    conv_image2data,
-    conv_labels2data,
-    conv_portlabels2data,
-    conv_ports2data,
-    conv_restart2data,
-    conv_sysctls2data,
-    conv_volumes2data,
-    conv_cpus2data,
-    _check_updates,
-    calculate_cpu_percent,
-    calculate_cpu_percent2,
-    format_bytes,
-)
-from api.utils.templates import conv2dict
-
-import yaml
-import json
-import io
-import zipfile
-import time
-import subprocess
-import docker
-import aiodocker
-import asyncio
-import aiostream
-
 
 """
 Returns all running apps in a list
@@ -109,8 +97,8 @@ def get_apps():
 
 
 """
-Get a single app by the container name and some easy 
-access to properties that aren't in the app 
+Get a single app by the container name and some easy
+access to properties that aren't in the app
 attributes
 """
 
@@ -163,7 +151,7 @@ def get_app_logs(app_name):
 
 
 """
-Deploy a new app. Format is available in 
+Deploy a new app. Format is available in
 ../db/schemas/apps.py
 """
 
@@ -194,7 +182,7 @@ def deploy_app(template: DeployForm):
         raise HTTPException(status_code=exc.status_code, detail=exc.detail)
     except Exception as exc:
         raise HTTPException(
-            status_code=exc.response.status_code, detail=exc.explanation
+            status_code=exc.status_code, detail=exc.detail
         )
     print("done deploying")
 
@@ -221,7 +209,7 @@ def Merge(dict1, dict2):
 
 """
 This function actually runs the docker run command.
-It also checks if edit is set to true so it can 
+It also checks if edit is set to true so it can
 remove the container you're editing before deploying
 a new one.
 """
@@ -373,7 +361,7 @@ def app_update(app_name):
 
 """
 Checks for current docker id (the one yacht is running
-in) and then launches the next function in a 
+in) and then launches the next function in a
 background task.
 """
 
@@ -402,7 +390,7 @@ def _update_self(background_tasks):
 
 
 """
-Spins up a watchtower instance with --cleanup and 
+Spins up a watchtower instance with --cleanup and
 --run-once pointed at the current ID of yacht.
 """
 
